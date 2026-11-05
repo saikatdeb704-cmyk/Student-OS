@@ -1120,9 +1120,13 @@ export const dbStore = {
   ): StudentProfile {
     const store = getStore();
     const targetId = resolveUserId(userId);
-    const account = store.usersById[targetId];
+    let account = store.usersById[targetId];
     if (!account) {
-      throw new Error("Unauthorized: Cannot update non-existent user profile.");
+      this.createProfile({
+        id: targetId,
+        fullName: input.fullName,
+      });
+      account = store.usersById[targetId];
     }
 
     const normalizedInterests = Array.isArray(input.careerInterests)

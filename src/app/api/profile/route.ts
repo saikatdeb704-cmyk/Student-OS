@@ -32,42 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    const profile = dbStore.updateProfile(parsed.data, sessionUserId);
-
-    // Sync to Supabase profiles & user_preferences when configured
-    const supabase = await createSupabaseServerClient();
-    if (supabase) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          email: user.email,
-          full_name: profile.fullName,
-          country: profile.country,
-          institution: profile.institution,
-          degree: profile.degree,
-          department: profile.department,
-          academic_year: profile.academicYear,
-          semester: profile.semester,
-          career_interests: profile.careerInterests,
-          learning_goals: profile.learningGoals,
-          preferred_language: profile.preferredLanguage,
-          timezone: profile.timezone,
-          career_goal: profile.careerGoal,
-          persona: profile.persona,
-          onboarding_completed: true,
-        });
-
-        await supabase.from("user_preferences").upsert({
-          user_id: user.id,
-          language: profile.preferredLanguage,
-          daily_study_hours: profile.dailyStudyHours,
-        });
-      }
-    }
+    const profile = await SupabaseDataService.updateProfile(parsed.data, sessionUserId);
 
     const response = NextResponse.json({
       profile,

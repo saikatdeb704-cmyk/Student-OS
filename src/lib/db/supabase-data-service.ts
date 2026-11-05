@@ -7,7 +7,7 @@
  * multi-tenant database persistence when Supabase credentials are provided.
  */
 
-import { createSupabaseServerClient } from "../supabase/server.ts";
+import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "../supabase/server.ts";
 import { isSupabaseConfigured } from "../supabase/client.ts";
 import { dbStore } from "./store.ts";
 import type {
@@ -81,14 +81,24 @@ export class SupabaseDataService {
     if (isSupabaseConfigured()) {
       try {
         const supabase = await createSupabaseServerClient();
+        let targetId = userId || localProfile.id;
+        let client: any = supabase;
+
         if (supabase) {
           const {
             data: { user },
           } = await supabase.auth.getUser();
+          if (user?.id) {
+            targetId = user.id;
+          } else {
+            client = createSupabaseServiceRoleClient() || supabase;
+          }
+        } else {
+          client = createSupabaseServiceRoleClient();
+        }
 
-          const targetId = user?.id || localProfile.id;
-
-          await supabase.from("profiles").upsert({
+        if (client) {
+          await client.from("profiles").upsert({
             id: targetId,
             email: localProfile.email,
             full_name: input.fullName,
@@ -108,6 +118,13 @@ export class SupabaseDataService {
             persona: input.persona,
             daily_study_hours: input.dailyStudyHours,
             onboarding_completed: true,
+            updated_at: new Date().toISOString(),
+          });
+
+          await client.from("user_preferences").upsert({
+            user_id: targetId,
+            language: input.preferredLanguage,
+            daily_study_hours: input.dailyStudyHours,
             updated_at: new Date().toISOString(),
           });
         }
