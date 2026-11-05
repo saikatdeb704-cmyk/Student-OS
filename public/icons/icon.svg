@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Inner Subtle Accent Border -->
+  <rect x="8" y="8" width="496" height="496" rx="104" stroke="#60A5FA" stroke-opacity="0.3" stroke-width="4" fill="none" />
+
+  <!-- Graduation Cap -->
+  <g filter="url(#shadow)">
+    <!-- Cap Diamond (Mortarboard) -->
+    <path d="M256 120 L416 195 L256 270 L96 195 Z" fill="#FFFFFF" />
+    
+    <!-- Cap Lower Band -->
+    <path d="M152 245 L152 305 C152 345, 360 345, 360 305 L360 245" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Tassel -->
+    <path d="M380 205 L404 290" stroke="#FDE047" stroke-width="8" stroke-linecap="round" />
+    <circle cx="404" cy="296" r="10" fill="#FDE047" />
+  </g>
+
+  <!-- 4-Point AI Intelligence Star Spark -->
+  <path d="M390 100 Q390 140 430 140 Q390 140 390 180 Q390 140 350 140 Q390 140 390 100 Z" fill="url(#sparkGrad)" />
+</svg>

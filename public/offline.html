@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline — Student OS</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #F8FAFC; color: #0F172A; display: flex; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; text-align: center; }
+    .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 2.5rem 2rem; max-width: 480px; width: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background-color: #FEF3C7; color: #92400E; font-size: 0.75rem; font-weight: 600; margin-bottom: 1.25rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background-color: #D97706; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; color: #0F172A; }
+    p { font-size: 0.925rem; color: #64748B; line-height: 1.5; margin-bottom: 1.5rem; }
+    .features { text-align: left; background: #F1F5F9; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #334155; }
+    .features ul { list-style: none; margin-top: 0.5rem; }
+    .features li { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 0.75rem 1.25rem; border-radius: 8px; background-color: #2563EB; color: #FFFFFF; font-weight: 600; font-size: 0.875rem; border: none; cursor: pointer; text-decoration: none; transition: background-color 0.15s ease; }
+    .btn:hover { background-color: #1D4ED8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <span class="dot"></span>
+      Offline Shell Active
+    </div>
+    <h1>You are currently offline</h1>
+    <p>Student OS is currently running in offline shell mode. Your existing session remains secure.</p>
+    
+    <div class="features">
+      <strong>Available while offline:</strong>
+      <ul>
+        <li>✓ View cached study schedules and flashcards</li>
+        <li>✓ Review offline study plan guidelines</li>
+        <li>✓ Safe private document isolation (unshared)</li>
+      </ul>
+      <p style="margin-top: 8px; margin-bottom: 0; font-size: 0.8rem; color: #64748B;">
+        Live AI CEO multi-agent execution and streaming will resume immediately once your connection is restored.
+      </p>
+    </div>
+
+    <button class="btn" onclick="window.location.reload()">
+      Check Connection & Retry
+    </button>
+  </div>
+</body>
+</html>
+

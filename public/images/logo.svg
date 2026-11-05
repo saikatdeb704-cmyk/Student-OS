@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" fill="none">
+  <defs>
+    <linearGradient id="gradLogo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="gradSpark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Icon Emblem -->
+  <rect x="10" y="10" width="100" height="100" rx="24" fill="url(#gradLogo)" />
+  <!-- Graduation Cap -->
+  <path d="M60 35 L90 50 L60 65 L30 50 Z" fill="#FFFFFF" />
+  <path d="M42 60 L42 74 C42 84, 78 84, 78 74 L78 60" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" />
+  <circle cx="88" cy="72" r="3" fill="#FDE047" />
+  <!-- AI Spark -->
+  <path d="M85 30 Q85 38 93 38 Q85 38 85 46 Q85 38 77 38 Q85 38 85 30 Z" fill="url(#gradSpark)" />
+
+  <!-- Typography -->
+  <text x="130" y="65" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="40" fill="#0F172A" letter-spacing="-0.5">
+    Student<tspan fill="#2563EB">OS</tspan>
+  </text>
+  <text x="132" y="92" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="500" font-size="14" fill="#64748B" letter-spacing="0.2">
+    One AI CEO • 15 Specialised Agents • One Organised Student Life
+  </text>
+</svg>
+
