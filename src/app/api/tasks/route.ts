@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SupabaseDataService } from "@/lib/db/supabase-data-service";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const CreateTaskSchema = z.object({
   title: z.string().min(2).max(200),
@@ -16,13 +16,13 @@ const UpdateTaskSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const tasks = await SupabaseDataService.getTasks(sessionUserId);
   return NextResponse.json({ tasks });
 }
 
 export async function POST(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const body = await request.json();
   const parsed = CreateTaskSchema.safeParse(body);
   if (!parsed.success) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const body = await request.json();
   const parsed = UpdateTaskSchema.safeParse(body);
   if (!parsed.success) {

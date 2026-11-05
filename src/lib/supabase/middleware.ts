@@ -94,11 +94,13 @@ export async function updateSessionAndEnforceRoutes(request: NextRequest) {
   }
 
   // Fallback / Local Auth session cookies (works seamlessly alongside or without live Supabase)
-  const localSessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (localSessionCookie) {
-    isAuthenticated = true;
-    isOnboarded =
-      request.cookies.get(ONBOARDED_COOKIE_NAME)?.value === "true";
+  if (!isAuthenticated) {
+    const localSessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    if (localSessionCookie) {
+      isAuthenticated = true;
+      isOnboarded =
+        request.cookies.get(ONBOARDED_COOKIE_NAME)?.value === "true";
+    }
   }
 
   // 1. Unauthenticated users visiting protected pages -> redirect to /login

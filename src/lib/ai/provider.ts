@@ -179,7 +179,7 @@ export function recordAIUsageMetrics(params: {
     userId: uid,
     agentSlug: params.agentSlug || "ceo",
     provider: params.provider || "gemini",
-    model: params.model || process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    model: params.model || process.env.GEMINI_MODEL || "gemini-3.8-flash",
     inputTokens: params.inputTokens,
     outputTokens: params.outputTokens,
     totalTokens,
@@ -255,8 +255,44 @@ export function getAIUsageSnapshot(userId?: string): TokenUsageSnapshot {
     providerMode: process.env.GEMINI_API_KEY
       ? "gemini"
       : "local_contextual_engine",
-    model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
   };
+}
+
+async function fetchGeminiWithRetry(
+  endpoint: string,
+  bodyObj: Record<string, unknown>,
+  signal?: AbortSignal,
+  maxRetries = 2
+): Promise<Response> {
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal,
+        body: JSON.stringify(bodyObj),
+      });
+
+      if ((res.status === 503 || res.status === 429) && attempt < maxRetries) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, attempt * 1200));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      if (
+        attempt < maxRetries &&
+        !(err instanceof DOMException && err.name === "AbortError")
+      ) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, attempt * 1200));
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 export class GeminiProviderAdapter implements AIProviderAdapter {
@@ -264,7 +300,7 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
   readonly providerId = "google-gemini";
 
   get defaultModel(): string {
-    return process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    return process.env.GEMINI_MODEL || "gemini-3.8-flash";
   }
 
   get modelName(): string {
@@ -354,11 +390,9 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 20000);
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
+      const response = await fetchGeminiWithRetry(
+        endpoint,
+        {
           systemInstruction: {
             parts: [{ text: parsed.data.systemPrompt }],
           },
@@ -373,8 +407,9 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
             maxOutputTokens: maxTokens,
             responseMimeType: "application/json",
           },
-        }),
-      });
+        },
+        controller.signal
+      );
 
       clearTimeout(timeout);
 
@@ -469,24 +504,20 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
         this.modelName
       )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: parsed.data.systemPrompt }],
+      const response = await fetchGeminiWithRetry(endpoint, {
+        systemInstruction: {
+          parts: [{ text: parsed.data.systemPrompt }],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: parsed.data.userPrompt }],
           },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: parsed.data.userPrompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: parsed.data.temperature ?? 0.25,
-            maxOutputTokens: maxTokens,
-          },
-        }),
+        ],
+        generationConfig: {
+          temperature: parsed.data.temperature ?? 0.25,
+          maxOutputTokens: maxTokens,
+        },
       });
 
       if (!response.ok) return null;

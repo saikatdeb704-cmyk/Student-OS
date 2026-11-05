@@ -7,7 +7,7 @@ import {
   MAX_TOKENS_PER_REQUEST,
 } from "@/lib/ai/provider";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { CEOEvent } from "@/types/student-os";
 
 const ChatRequestSchema = z.object({
@@ -39,8 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionUserId =
-      request.cookies.get(SESSION_COOKIE_NAME)?.value || "usr_arjun_01";
+    const sessionUserId = await getAuthenticatedUserId(request);
 
     const rateResult = checkRateLimit(`chat_${sessionUserId}`, "ai_chat", sessionUserId);
     if (!rateResult.allowed) {

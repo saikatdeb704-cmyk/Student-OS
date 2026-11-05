@@ -120,7 +120,7 @@ interface RelationalDatabaseState {
   auditLogs: AuditLogRow[];
 }
 
-const DEMO_USER_ID = "student-demo-001";
+export const DEMO_USER_ID = "student-demo-001";
 const nowIso = () => new Date().toISOString();
 const daysFromNowIso = (days: number) =>
   new Date(Date.now() + 86400000 * days).toISOString();
@@ -927,8 +927,7 @@ function getStore(): RelationalDatabaseState {
 }
 
 function resolveUserId(userId?: string): string {
-  const store = getStore();
-  return userId || store.activeUserId;
+  return userId || DEMO_USER_ID;
 }
 
 export const dbStore = {

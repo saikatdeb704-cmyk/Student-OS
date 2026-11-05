@@ -7,6 +7,7 @@ import {
   ONBOARDED_COOKIE_NAME,
   SESSION_COOKIE_NAME,
 } from "@/lib/supabase/middleware";
+import { setSessionCookies } from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,18 +102,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-    response.cookies.set(SESSION_COOKIE_NAME, account.id, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    response.cookies.set(ONBOARDED_COOKIE_NAME, "false", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    setSessionCookies(response, account.id, false);
 
     return response;
   } catch (err) {

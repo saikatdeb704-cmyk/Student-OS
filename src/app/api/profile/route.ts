@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OnboardingProfileSchema } from "@/types/student-os";
-import { dbStore } from "@/lib/db/store";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import {
-  ONBOARDED_COOKIE_NAME,
-  SESSION_COOKIE_NAME,
-} from "@/lib/supabase/middleware";
-
 import { SupabaseDataService } from "@/lib/db/supabase-data-service";
+import { getAuthenticatedUserId, setSessionCookies } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const profile = await SupabaseDataService.getProfile(sessionUserId);
   return NextResponse.json({ profile });
 }
@@ -31,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const profile = await SupabaseDataService.updateProfile(parsed.data, sessionUserId);
 
     const response = NextResponse.json({
@@ -39,12 +33,7 @@ export async function POST(request: NextRequest) {
       redirectTo: "/",
     });
 
-    response.cookies.set(ONBOARDED_COOKIE_NAME, "true", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    setSessionCookies(response, sessionUserId, true);
 
     return response;
   } catch (err) {

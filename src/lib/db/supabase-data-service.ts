@@ -149,7 +149,7 @@ export class SupabaseDataService {
             .select("*")
             .order("created_at", { ascending: false });
 
-          if (!error && Array.isArray(data) && data.length > 0) {
+          if (!error && Array.isArray(data)) {
             return data.map((t) => ({
               id: t.id,
               userId: t.user_id,
