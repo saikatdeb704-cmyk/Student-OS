@@ -142,6 +142,20 @@ export function getMaxTokensPerRequest(): number {
   return Number(process.env.MAX_TOKENS_PER_REQUEST || MAX_TOKENS_PER_REQUEST);
 }
 
+export function resolveModelName(configuredModel?: string): string {
+  const model = (configuredModel || "").trim().toLowerCase();
+  // Automatically normalize legacy, deprecated, or obsolete model names to the active production model
+  if (
+    !model ||
+    model === "gemini-1.5-flash" ||
+    model === "gemini-1.5-pro" ||
+    model === "gemini-2.5-flash"
+  ) {
+    return "gemini-3.8-flash";
+  }
+  return configuredModel || "gemini-3.8-flash";
+}
+
 export function recordAIUsageMetrics(params: {
   userId?: string;
   agentSlug?: string;
@@ -179,7 +193,7 @@ export function recordAIUsageMetrics(params: {
     userId: uid,
     agentSlug: params.agentSlug || "ceo",
     provider: params.provider || "gemini",
-    model: params.model || process.env.GEMINI_MODEL || "gemini-3.8-flash",
+    model: resolveModelName(params.model || process.env.GEMINI_MODEL),
     inputTokens: params.inputTokens,
     outputTokens: params.outputTokens,
     totalTokens,
@@ -255,7 +269,7 @@ export function getAIUsageSnapshot(userId?: string): TokenUsageSnapshot {
     providerMode: process.env.GEMINI_API_KEY
       ? "gemini"
       : "local_contextual_engine",
-    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
+    model: resolveModelName(process.env.GEMINI_MODEL),
   };
 }
 
@@ -266,9 +280,10 @@ async function fetchGeminiWithRetry(
   maxRetries = 2
 ): Promise<Response> {
   let attempt = 0;
+  let currentEndpoint = endpoint;
   while (true) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(currentEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         signal,
@@ -278,6 +293,10 @@ async function fetchGeminiWithRetry(
       if ((res.status === 503 || res.status === 429) && attempt < maxRetries) {
         attempt++;
         await new Promise((r) => setTimeout(r, attempt * 1200));
+        // If the primary model encounters a demand spike, failover to flash-latest on retry
+        if (currentEndpoint.includes("gemini-3.8-flash")) {
+          currentEndpoint = currentEndpoint.replace("gemini-3.8-flash", "gemini-flash-latest");
+        }
         continue;
       }
       return res;
@@ -300,7 +319,7 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
   readonly providerId = "google-gemini";
 
   get defaultModel(): string {
-    return process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    return resolveModelName(process.env.GEMINI_MODEL);
   }
 
   get modelName(): string {
