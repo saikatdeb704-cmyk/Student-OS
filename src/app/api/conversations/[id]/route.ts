@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { dbStore } from "@/lib/db/store";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const UpdateTitleSchema = z.object({
   title: z
@@ -16,7 +16,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const details = dbStore.getConversationById(id, sessionUserId);
 
   if (!details) {
@@ -35,7 +35,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params;
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = UpdateTitleSchema.safeParse(body);
 
@@ -81,7 +81,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const deleted = dbStore.deleteConversation(id, sessionUserId);
 
   if (!deleted) {

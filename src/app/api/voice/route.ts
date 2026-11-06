@@ -6,7 +6,7 @@ import {
   THIRD_PARTY_VOICE_DISCLOSURE_TEXT,
   validateVoiceProviderConsent,
 } from "@/lib/voice/provider";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const VoiceActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -38,7 +38,7 @@ const VoiceActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   return NextResponse.json({
     settings: dbStore.getVoiceSettings(sessionUserId),
     disclosureText: THIRD_PARTY_VOICE_DISCLOSURE_TEXT,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = VoiceActionSchema.safeParse(body);
 

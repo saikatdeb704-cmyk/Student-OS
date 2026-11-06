@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbStore } from "@/lib/db/store";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 export async function GET(request: NextRequest) {
-  const sessionUserId =
-    request.cookies.get(SESSION_COOKIE_NAME)?.value || "student-demo-001";
+  const sessionUserId = await getAuthenticatedUserId(request);
   const { searchParams } = new URL(request.url);
   const limit = Math.min(
     100,

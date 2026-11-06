@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { dbStore } from "@/lib/db/store";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const UpdateMemorySchema = z.object({
   content: z.string().min(3).optional(),
@@ -15,7 +15,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const { id } = await context.params;
     const body = await request.json();
     const parsed = UpdateMemorySchema.safeParse(body);
@@ -57,7 +57,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const { id } = await context.params;
 
     const deleted = dbStore.deleteMemoryRecord(id, sessionUserId);

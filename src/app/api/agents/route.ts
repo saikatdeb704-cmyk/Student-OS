@@ -5,7 +5,7 @@ import {
   setAgentEnabledStatus,
 } from "@/lib/agents/registry";
 import { dbStore } from "@/lib/db/store";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { AgentSlug } from "@/types/student-os";
 
 const ToggleAgentSchema = z.object({
@@ -14,7 +14,7 @@ const ToggleAgentSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const agents = getAllAgents();
   const runs = dbStore.getRuns(sessionUserId);
   const agentTasks = dbStore.getAgentTasks(sessionUserId);

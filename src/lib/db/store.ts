@@ -927,7 +927,11 @@ function getStore(): RelationalDatabaseState {
 }
 
 function resolveUserId(userId?: string): string {
-  return userId || DEMO_USER_ID;
+  if (!userId) return DEMO_USER_ID;
+  if (typeof userId === "string" && userId.includes(".")) {
+    return userId.split(".")[0];
+  }
+  return userId;
 }
 
 export const dbStore = {
@@ -1874,10 +1878,46 @@ export const dbStore = {
   } | null {
     const store = getStore();
     const uid = resolveUserId(userId);
-    const convo = store.conversations.find(
+    let convo = store.conversations.find(
       (c) => c.id === conversationId && c.user_id === uid
     );
-    if (!convo) return null;
+    if (!convo) {
+      const isOtherUser = store.conversations.find(
+        (c) => c.id === conversationId && c.user_id !== uid
+      );
+      if (isOtherUser) return null;
+
+      const profile = this.getProfile(uid);
+      const now = nowIso();
+      const newConvo: ConversationRow = {
+        id: conversationId,
+        user_id: uid,
+        title: "Academic & Career Executive Plan",
+        status: "active",
+        created_at: now,
+        updated_at: now,
+      };
+      store.conversations.unshift(newConvo);
+      convo = newConvo;
+
+      const existingMsgs = store.messages.filter(
+        (m) => m.conversation_id === conversationId && m.user_id === uid
+      );
+      if (existingMsgs.length === 0) {
+        store.messages.push({
+          id: `msg_${Date.now()}_welcome_${Math.random().toString(36).slice(2, 6)}`,
+          conversation_id: conversationId,
+          user_id: uid,
+          role: "assistant",
+          content: `Welcome to a new **Student OS CEO Session**, **${profile.fullName}**. I have loaded your Semester ${profile.semester} (${profile.department}) context. Tell me what you want to plan, study, build, or review today.`,
+          metadata: {
+            status: "completed",
+            selectedAgents: ["ceo"],
+          },
+          created_at: now,
+        });
+      }
+    }
 
     const msgs: ChatMessageItem[] = store.messages
       .filter((m) => m.conversation_id === convo.id && m.user_id === uid)
@@ -2019,9 +2059,23 @@ export const dbStore = {
     );
 
     if (!convo) {
-      // Auto-create conversation if client passed a non-existent or default ID
-      const created = this.createConversation("New Conversation", uid);
-      convo = store.conversations.find((c) => c.id === created.id)!;
+      // In serverless multi-instance environments, preserve the requested conversationId
+      const now = nowIso();
+      const newConvoId =
+        input.conversationId && input.conversationId.trim().length > 0
+          ? input.conversationId.trim()
+          : `convo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+      const newConvo: ConversationRow = {
+        id: newConvoId,
+        user_id: uid,
+        title: "Academic & Career Executive Plan",
+        status: "active",
+        created_at: now,
+        updated_at: now,
+      };
+      store.conversations.unshift(newConvo);
+      convo = newConvo;
     }
 
     const now = nowIso();

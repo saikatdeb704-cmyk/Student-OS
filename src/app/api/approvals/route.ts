@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ApprovalService } from "@/lib/security/approval-service";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { AgentSlug, ApprovalStatus } from "@/types/student-os";
 
 const CreateApprovalSchema = z.object({
@@ -15,8 +15,7 @@ const CreateApprovalSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const sessionUserId =
-    request.cookies.get(SESSION_COOKIE_NAME)?.value || "student-demo-001";
+  const sessionUserId = await getAuthenticatedUserId(request);
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") as ApprovalStatus | null;
   const includeExpired = searchParams.get("includeExpired") === "true";
@@ -36,8 +35,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const sessionUserId =
-    request.cookies.get(SESSION_COOKIE_NAME)?.value || "student-demo-001";
+  const sessionUserId = await getAuthenticatedUserId(request);
   const body = await request.json();
   const parsed = CreateApprovalSchema.safeParse(body);
 

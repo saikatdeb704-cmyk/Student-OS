@@ -3,7 +3,7 @@ import { z } from "zod";
 import { dbStore } from "@/lib/db/store";
 import { getAgentBySlug } from "@/lib/agents/registry";
 import { validateAgentToolPermissions } from "@/lib/agents/orchestrator";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { AgentSlug } from "@/types/student-os";
 
 const IntelligenceActionSchema = z.discriminatedUnion("action", [
@@ -31,7 +31,7 @@ const IntelligenceActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const query = request.nextUrl.searchParams.get("q") || "";
   const searchResults = dbStore.searchKnowledgeBase(query, sessionUserId);
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = IntelligenceActionSchema.safeParse(body);
 

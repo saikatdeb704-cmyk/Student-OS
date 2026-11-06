@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { dbStore } from "@/lib/db/store";
 import { MEMORY_CATEGORIES, MEMORY_CATEGORY_LABELS } from "@/lib/memory/engine";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const MemoryActionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -30,7 +30,7 @@ const MemoryActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const query = request.nextUrl.searchParams.get("q") || "";
   const category = request.nextUrl.searchParams.get("category") || "all";
   const includeArchived =
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = MemoryActionSchema.safeParse(body);
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ApprovalService } from "@/lib/security/approval-service";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 
 const CancelSchema = z.object({
   reason: z.string().optional(),
@@ -12,8 +12,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const sessionUserId =
-    request.cookies.get(SESSION_COOKIE_NAME)?.value || "student-demo-001";
+  const sessionUserId = await getAuthenticatedUserId(request);
   let reason: string | undefined;
 
   try {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { dbStore } from "@/lib/db/store";
 import { getAgentBySlug, getAllAgents } from "@/lib/agents/registry";
 import { validateAgentToolPermissions } from "@/lib/agents/orchestrator";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { AgentSlug } from "@/types/student-os";
 
 const StudentSupportActionSchema = z.discriminatedUnion("action", [
@@ -28,7 +28,7 @@ const StudentSupportActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   const totalAgents = getAllAgents().length;
   return NextResponse.json({
     metrics: dbStore.getDashboardMetrics(totalAgents, sessionUserId),
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = StudentSupportActionSchema.safeParse(body);
 

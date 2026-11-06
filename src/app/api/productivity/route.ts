@@ -4,7 +4,7 @@ import { dbStore } from "@/lib/db/store";
 import { getAgentBySlug } from "@/lib/agents/registry";
 import { validateAgentToolPermissions } from "@/lib/agents/orchestrator";
 import { ApprovalService } from "@/lib/security/approval-service";
-import { SESSION_COOKIE_NAME } from "@/lib/supabase/middleware";
+import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { AgentSlug } from "@/types/student-os";
 
 const ProductivityActionSchema = z.discriminatedUnion("action", [
@@ -67,7 +67,7 @@ const ProductivityActionSchema = z.discriminatedUnion("action", [
 ]);
 
 export async function GET(request: NextRequest) {
-  const sessionUserId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const sessionUserId = await getAuthenticatedUserId(request);
   return NextResponse.json({
     tasks: dbStore.getTasks(sessionUserId),
     todaysTasks: dbStore.getTodaysTasks(sessionUserId),
@@ -84,8 +84,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionUserId =
-      request.cookies.get(SESSION_COOKIE_NAME)?.value || "student-demo-001";
+    const sessionUserId = await getAuthenticatedUserId(request);
     const body = await request.json();
     const parsed = ProductivityActionSchema.safeParse(body);
 
