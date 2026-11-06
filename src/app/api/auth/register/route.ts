@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RegisterSchema } from "@/types/student-os";
 import { dbStore } from "@/lib/db/store";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rate-limiter";
 import {
   ONBOARDED_COOKIE_NAME,
@@ -67,7 +70,22 @@ export async function POST(request: NextRequest) {
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
-      supabaseUserId = data.user?.id;
+      if (data.user) {
+        supabaseUserId = data.user.id;
+        try {
+          const admin = createSupabaseServiceRoleClient();
+          if (admin) {
+            await admin.from("profiles").upsert({
+              id: data.user.id,
+              email: email.trim().toLowerCase(),
+              full_name: fullName.trim(),
+              onboarding_completed: false,
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
     }
 
     // 2. Register in unified store & set HTTP-only session cookies
