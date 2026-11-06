@@ -10,6 +10,9 @@ import { checkRateLimit } from "@/lib/security/rate-limiter";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
 import type { CEOEvent } from "@/types/student-os";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 const ChatRequestSchema = z.object({
   message: z
     .string()

@@ -277,22 +277,31 @@ async function fetchGeminiWithRetry(
   endpoint: string,
   bodyObj: Record<string, unknown>,
   signal?: AbortSignal,
-  maxRetries = 2
+  maxRetries = 1
 ): Promise<Response> {
   let attempt = 0;
   let currentEndpoint = endpoint;
   while (true) {
+    const internalController = new AbortController();
+    const timeout = setTimeout(() => internalController.abort(), 12000);
+    const onExternalAbort = () => internalController.abort();
+    if (signal) {
+      signal.addEventListener("abort", onExternalAbort);
+    }
+
     try {
       const res = await fetch(currentEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal,
+        signal: internalController.signal,
         body: JSON.stringify(bodyObj),
       });
+      clearTimeout(timeout);
+      if (signal) signal.removeEventListener("abort", onExternalAbort);
 
       if ((res.status === 503 || res.status === 429) && attempt < maxRetries) {
         attempt++;
-        await new Promise((r) => setTimeout(r, attempt * 1200));
+        await new Promise((r) => setTimeout(r, attempt * 1000));
         // If the primary model encounters a demand spike, failover to flash-latest on retry
         if (currentEndpoint.includes("gemini-3.8-flash")) {
           currentEndpoint = currentEndpoint.replace("gemini-3.8-flash", "gemini-flash-latest");
@@ -301,12 +310,15 @@ async function fetchGeminiWithRetry(
       }
       return res;
     } catch (err) {
+      clearTimeout(timeout);
+      if (signal) signal.removeEventListener("abort", onExternalAbort);
+
       if (
         attempt < maxRetries &&
-        !(err instanceof DOMException && err.name === "AbortError")
+        !(signal?.aborted)
       ) {
         attempt++;
-        await new Promise((r) => setTimeout(r, attempt * 1200));
+        await new Promise((r) => setTimeout(r, attempt * 1000));
         continue;
       }
       throw err;
@@ -523,21 +535,30 @@ export class GeminiProviderAdapter implements AIProviderAdapter {
         this.modelName
       )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      const response = await fetchGeminiWithRetry(endpoint, {
-        systemInstruction: {
-          parts: [{ text: parsed.data.systemPrompt }],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: parsed.data.userPrompt }],
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetchGeminiWithRetry(
+        endpoint,
+        {
+          systemInstruction: {
+            parts: [{ text: parsed.data.systemPrompt }],
           },
-        ],
-        generationConfig: {
-          temperature: parsed.data.temperature ?? 0.25,
-          maxOutputTokens: maxTokens,
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: parsed.data.userPrompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: parsed.data.temperature ?? 0.25,
+            maxOutputTokens: maxTokens,
+          },
         },
-      });
+        controller.signal
+      );
+
+      clearTimeout(timeout);
 
       if (!response.ok) return null;
       const payload = await response.json();
